@@ -3,6 +3,7 @@ Simple Windows/Window Interface, no not that SWI-
 
 ## Sample
 ```c
+#include <6.0g/swi.h>
 int main(void) {
 	var h = window();
 	setSize(h, 640, 480);
@@ -27,6 +28,7 @@ int main(void) {
 	setSize(b, 100, 20);
 	setPos(b, 10, 60);
 	setFont(b, font);
+	modifyStyle(b, BS_FLAT, 0);
 
 	var t3 = textbox(h);
 	setSize(t3, 100, 20);
@@ -36,7 +38,7 @@ int main(void) {
 	free(font);
 
 
-	ShowWindow(h, SW_SHOW);
+	setVisible(h, true);
 	while (1) {
 		MSG msg;
 		if (poll(&msg)) {
@@ -59,5 +61,4 @@ int main(void) {
 			process(&msg);
 		}
 	}
-}
-```
+}```
