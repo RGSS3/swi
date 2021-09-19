@@ -8,7 +8,7 @@ int main(void) {
     var h = window();
     setSize(h, 640, 480);   setPos(h, 200, 200);
     
-    var font = aGetFont(h);
+    var font = aGetFont(h);  // prefix-a means the object is (m)alloc'ed, you should free after use, like in asprintf
     strcpy(font->lfFaceName, "Cambria");
     font->lfHeight = 14;
     var t1 = textbox(h);
