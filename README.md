@@ -3,6 +3,9 @@ Simple Windows/Window Interface, no not that SWI-
 GCC only   
 One needs no VS and One who needs VS needs no swi   
 
+
+Please add '-lgdi32' in your linker options
+
 ## Sample
 ```c
 #include <6.0g/swi.h>
