@@ -7,6 +7,11 @@
 #include <stdlib.h>
 #include <windows.h>
 
+#ifdef SWI_OPENGL
+#include <gl/gl.h>
+#include <gl/glu.h>
+#endif
+
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
 
@@ -75,6 +80,15 @@ HWND swi_openglwindow(void) {
     WINASSERT(wglMakeCurrent(hdc, hrc));
     ReleaseDC(hwnd, hdc);
     return hwnd;
+}
+
+void swi_glFlat(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0, w, 0, h);
+    glMatrixMode(GL_MODELVIEW);  
+    glLoadIdentity(); 	
 }
 
 
@@ -255,6 +269,8 @@ void swi_swapBuffers(HWND h) {
     #define asprintf swi_asprintf
     #define var __auto_type
     #define swapBuffers swi_swapBuffers
+    
+    #define glFlat swi_glFlat
 #endif
 
 #endif
