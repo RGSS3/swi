@@ -1,7 +1,7 @@
 # swi
-Simple Window Interface, no not that SWI-
+Simple Windows/Window Interface, no not that SWI-
 
-## sample
+## Sample
 ```c
 #include <swi.h>
 int main(void) {
@@ -12,17 +12,30 @@ int main(void) {
     strcpy(font->lfFaceName, "Cambria");
     font->lfHeight = 14;
     var t1 = textbox(h);
-    setSize(t1, 100, 20);    setPos(t1, 10, 10);    setFont(t1, font);    modifyStyle(t1, 0, WS_BORDER);
+    setSize(t1, 100, 20);
+    setPos(t1, 10, 10);
+    setFont(t1, font);
+    modifyStyle(t1, 0, WS_BORDER);
     
     var t2 = textbox(h);
-    setSize(t2, 100, 20);    setPos(t2, 120, 10);    setFont(t2, font);    modifyStyle(t1, 0, WS_BORDER);
+    setSize(t2, 100, 20);
+    setPos(t2, 120, 10);
+    setFont(t2, font);
+    modifyStyle(t1, 0, WS_BORDER);
     
     
     var b = button(h);
-    setText(b, "Add");    setSize(b, 100, 20);    setPos(b, 10, 60);    modifyStyle(b, BS_FLAT, 0);    setFont(b, font);
+    setText(b, "Add");
+    setSize(b, 100, 20);
+    setPos(b, 10, 60);
+    modifyStyle(b, BS_FLAT, 0);
+    setFont(b, font);
     
     var t3 = textbox(h);
-    setSize(t3, 100, 20);    setPos(t3, 10, 110);    setFont(t3, font);    modifyStyle(t1, 0, WS_BORDER);
+    setSize(t3, 100, 20);
+    setPos(t3, 10, 110);
+    setFont(t3, font);
+    modifyStyle(t1, 0, WS_BORDER);
     
     free(font);
     
