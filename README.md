@@ -4,7 +4,8 @@ GCC only
 One needs no VS and One who needs VS needs no swi   
 
 
-Please add '-lgdi32' in your linker options
+Please add '-lgdi32' in your linker options   
+
 And if openglwindow() is need, add '-lopengl32 -lglu32'
 ## Sample
 ```c
