@@ -1,5 +1,7 @@
 # swi
 Simple Windows/Window Interface, no not that SWI-
+GCC only
+One needs no VS and One who needs VS needs no swi
 
 ## Sample
 ```c
