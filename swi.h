@@ -239,6 +239,39 @@ void swi_swapBuffers(HWND h) {
 	ReleaseDC(h, hdc);	
 }
 
+typedef bool SWI_MSGFUNC(MSG *);
+typedef void SWI_RENDERFUNC(void);
+void swi_mainWindowLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
+	while (1) {
+		MSG msg;
+		if (swi_poll(&msg)) {
+			if (swi_isevent(&msg, 0, WM_QUIT)) {
+				break;
+			}
+			if (msgfunc(&msg)) {
+				continue;
+			}
+			swi_process(&msg);
+		} else {
+			render();
+		}
+	}	
+}
+
+void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
+	while (1) {
+		MSG msg;
+		if (swi_poll(&msg)) {
+			if (msgfunc(&msg)) {
+				continue;
+			}
+			swi_process(&msg);
+		} else {
+			render();
+		}
+	}	
+}
+
 #ifndef SWI_NO_SHORTNAMES
     #define window swi_window
     #define openglwindow swi_openglwindow
@@ -271,6 +304,8 @@ void swi_swapBuffers(HWND h) {
     #define swapBuffers swi_swapBuffers
     
     #define glFlat swi_glFlat
+    #define mainLoop swi_mainLoop
+    #define mainWindowLoop swi_mainWindowLoop
 #endif
 
 #endif
