@@ -1,10 +1,23 @@
 #ifndef SWI_H_
 #define SWI_H_
+#include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+
+#define WIDEN2(x) L ## x
+#define WIDEN(x) WIDEN2(x)
+
+#define WINASSERT(x) do{DWORD err;\
+	if(!(x) || ((err=GetLastError())!=0)){\
+		LPTSTR str=0;\
+		if(FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,0,err,0,(LPTSTR)&str,1,NULL)){\
+			fwprintf(stderr, L"SWI_ASSERT FAILED: " WIDEN(#x) " @ " WIDEN(__FILE__) " GetLastError()=%d (%s)\n",err, str);\
+		}else{fwprintf(stderr, L"SWI_ASSERT FAILED: " WIDEN(#x) " @ " WIDEN(__FILE__) " GetLastError()=%d (SPC Unknown Error)\n",err);}abort();\
+	}\
+}while(0);
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
 	switch(Message) {
@@ -24,6 +37,7 @@ __attribute__((constructor)) void register_class(void) {
 	memset(&wc,0,sizeof(wc));
 	wc.cbSize		 = sizeof(WNDCLASSEX);
 	wc.lpfnWndProc	 = WndProc;
+	wc.style         = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.hCursor		 = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
 	wc.lpszClassName = "SWICLASS";
@@ -40,6 +54,31 @@ __attribute__((constructor)) void register_class(void) {
 HWND swi_window(void) {
     return CreateWindowEx(0, "SWICLASS", "", 0x80cf0000, CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, 0, 0, 0, 0);
 }
+
+#ifdef SWI_OPENGL
+HWND swi_openglwindow(void) {
+	HWND hwnd = swi_window();
+	PIXELFORMATDESCRIPTOR pfd= {
+    	sizeof(pfd),
+    	1,
+    	PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER ,
+    	PFD_TYPE_RGBA,
+    	32,
+    	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 8, 0, PFD_MAIN_PLANE, 0, 0, 0, 0
+    };
+    HDC hdc=GetDC(hwnd);
+    assert(hdc);
+	WINASSERT(hdc!=NULL);
+    SetPixelFormat(hdc, ChoosePixelFormat(hdc, &pfd), &pfd);
+    HGLRC hrc=wglCreateContext(hdc);
+    WINASSERT(hrc!=NULL);
+    WINASSERT(wglMakeCurrent(hdc, hrc));
+    ReleaseDC(hwnd, hdc);
+    return hwnd;
+}
+
+
+#endif
 
 HWND swi_button(HWND par) {
     return CreateWindowEx(0, "Button", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
@@ -180,8 +219,15 @@ char *swi_asprintf(char const *fmt, ...) {
 	return ret;
 }
 
+void swi_swapBuffers(HWND h) {
+	HDC hdc = GetDC(h);
+	SwapBuffers(hdc);
+	ReleaseDC(h, hdc);	
+}
+
 #ifndef SWI_NO_SHORTNAMES
     #define window swi_window
+    #define openglwindow swi_openglwindow
     #define button swi_button
     #define textbox swi_textbox
     #define listbox swi_listbox
@@ -208,6 +254,7 @@ char *swi_asprintf(char const *fmt, ...) {
     #define modifyExStyle swi_modifyExStyle
     #define asprintf swi_asprintf
     #define var __auto_type
+    #define swapBuffers swi_swapBuffers
 #endif
 
 #endif
