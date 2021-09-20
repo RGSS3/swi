@@ -102,12 +102,20 @@ HWND swi_textbox(HWND par) {
     return CreateWindowEx(0, "Edit", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
 }
 
+HWND swi_combobox(HWND par) {
+    return CreateWindowEx(0, "ComboBox", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
+}
+
 HWND swi_listbox(HWND par) {
     return CreateWindowEx(0, "ListBox", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
 }
 
 HWND swi_static(HWND par) {
     return CreateWindowEx(0, "Static", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
+}
+
+HWND swi_createControl(const char *class) {
+	return CreateWindowEx(0, class, "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
 }
 
 LONG swi_getStyle(HWND h) {
@@ -278,6 +286,9 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
     #define button swi_button
     #define textbox swi_textbox
     #define listbox swi_listbox
+    #define combobox swi_combobox
+    #define createControl swi_createControl
+    
     #define label swi_static
     #define setText swi_setText
     #define aGetText swi_aGetText
