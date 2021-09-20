@@ -82,7 +82,7 @@ HWND swi_openglwindow(void) {
     return hwnd;
 }
 
-void swi_glFlat(int w, int h) {
+void swi_setGL2D(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -314,7 +314,7 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
     #define var __auto_type
     #define swapBuffers swi_swapBuffers
     
-    #define glFlat swi_glFlat
+    #define setGL2d swi_setGL2d
     #define mainLoop swi_mainLoop
     #define mainWindowLoop swi_mainWindowLoop
 #endif
