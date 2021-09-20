@@ -44,7 +44,7 @@ __attribute__((constructor)) void register_class(void) {
 	wc.lpfnWndProc	 = WndProc;
 	wc.style         = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.hCursor		 = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
 	wc.lpszClassName = "SWICLASS";
 	wc.hIcon		 = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hIconSm		 = LoadIcon(NULL, IDI_APPLICATION);
@@ -99,7 +99,7 @@ HWND swi_button(HWND par) {
 }
 
 HWND swi_textbox(HWND par) {
-    return CreateWindowEx(0, "ComboBox", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
+    return CreateWindowEx(0, "Edit", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
 }
 
 HWND swi_listbox(HWND par) {
