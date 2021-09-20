@@ -1,5 +1,5 @@
 #define SWI_OPENGL
-#include <6.0g/swi.h>
+#include "../swi.h"
 #include <math.h>
 size_t x = 0;
 size_t speed = 10;
