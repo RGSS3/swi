@@ -302,14 +302,13 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	    #define setFont(t)          (swi_setFont(swi_current, t))
 	    #define setVisible(t)       (swi_setVisible(swi_current, t))
 	    #define setStyle(t)         (swi_setStyle(swi_current, t))
-	    #define modifyStyle(t)      (swi_modifyStyle(swi_current, t))
+	    #define modifyStyle(a, b)      (swi_modifyStyle(swi_current, a, b))
 	    #define setExStyle(t)       (swi_setExStyle(swi_current, t))
 	    
 	    #define peek()              (swi_peek(&swi_msg))
 	    #define poll()              (swi_poll(&swi_msg))
 	    #define process()           (swi_process(&swi_msg))
 	    #define isevent(b, c)       (swi_isevent(&swi_msg, b, c))
-    
     
 	#else 	
 	    #define window swi_window
@@ -337,6 +336,11 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	    
 	    #define isevent swi_isevent
 	    #define process swi_process
+	    
+	    #define peek  swi_peek
+	    #define poll  swi_poll
+	    #define isevent swi_isevent
+    
 	#endif
 	
 	
