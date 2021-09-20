@@ -1,4 +1,4 @@
-#include <6.0g/swi.h>
+#include "../swi.h"
 int main(void) {
 	var h = window();
 	setSize(h, 640, 480);
