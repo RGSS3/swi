@@ -114,7 +114,7 @@ HWND swi_static(HWND par) {
     return CreateWindowEx(0, "Static", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
 }
 
-HWND swi_createControl(const char *class) {
+HWND swi_createControl(HWND par, const char *class) {
 	return CreateWindowEx(0, class, "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
 }
 
@@ -314,7 +314,7 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
     #define var __auto_type
     #define swapBuffers swi_swapBuffers
     
-    #define setGL2d swi_setGL2d
+    #define setGL2D swi_setGL2D
     #define mainLoop swi_mainLoop
     #define mainWindowLoop swi_mainWindowLoop
 #endif
