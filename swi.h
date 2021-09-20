@@ -280,36 +280,70 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	}	
 }
 
-#ifndef SWI_NO_SHORTNAMES
-    #define window swi_window
-    #define openglwindow swi_openglwindow
-    #define button swi_button
-    #define textbox swi_textbox
-    #define listbox swi_listbox
-    #define combobox swi_combobox
-    #define createControl swi_createControl
+#if !defined(SWI_NO_SHORTNAMES)
+	#if defined(SWI_STATEFUL_MODEL)
+		static __thread HWND swi_current;
+		static __thread HWND swi_current_window;
+		static __thread MSG swi_msg;
+	    #define AT(a)               do {swi_current = a;} while(0)
+	    #define ATWINDOW()          do {swi_current = swi_current_window;} while(0)
+	    #define window()            (swi_current = swi_current_window = swi_window())
+	    #define openglwindow()      (swi_current = swi_current_window = swi_openglwindow())
+	    #define button()            (swi_current = swi_button(swi_current_window))
+	    #define textbox()           (swi_current = swi_textbox(swi_current_window))
+	    #define listbox()           (swi_current = swi_listbox(swi_current_window))
+	    #define combobox()          (swi_current = swi_combobox(swi_current_window))
+	    #define label()             (swi_current = swi_static(swi_current_window))
+	    #define createControl(w)    (swi_current = swi_createControl(w, swi_currentwindow))
+	    
+	    #define setText(t)          (swi_setText(swi_current, t))
+	    #define setPos(a, b)        (swi_setPos(swi_current, a, b))
+	    #define setSize(a, b)       (swi_setSize(swi_current, a, b))
+	    #define setFont(t)          (swi_setFont(swi_current, t))
+	    #define setVisible(t)       (swi_setVisible(swi_current, t))
+	    #define setStyle(t)         (swi_setStyle(swi_current, t))
+	    #define modifyStyle(t)      (swi_modifyStyle(swi_current, t))
+	    #define setExStyle(t)       (swi_setExStyle(swi_current, t))
+	    
+	    #define peek()              (swi_peek(&swi_msg))
+	    #define poll()              (swi_poll(&swi_msg))
+	    #define process()           (swi_process(&swi_msg))
+	    #define isevent(b, c)       (swi_isevent(&swi_msg, b, c))
     
-    #define label swi_static
-    #define setText swi_setText
-    #define aGetText swi_aGetText
-    #define setPos swi_setPos
-    #define setSize swi_setSize
-    #define setVisible swi_setVisible
-    #define peek swi_peek
-    #define poll swi_poll
-    #define process swi_process
-    #define process1 swi_process1
-    #define process2 swi_process2
-    #define isevent swi_isevent
     
+	#else 	
+	    #define window swi_window
+	    #define openglwindow swi_openglwindow
+	    
+	    #define button swi_button
+	    #define textbox swi_textbox
+	    #define listbox swi_listbox
+	    #define combobox swi_combobox
+	    #define label swi_static
+	    #define createControl swi_createControl
+	    
+	    
+	    #define setText swi_setText
+	    #define setPos swi_setPos
+	    #define setSize swi_setSize
+	    #define setVisible swi_setVisible
+	    #define setFont swi_setFont
+	    #define setStyle swi_setStyle
+	    #define modifyStyle swi_modifyStyle
+	    #define setExStyle swi_setExStyle
+	    
+	    #define modifyExStyle swi_modifyExStyle
+	    
+	    
+	    #define isevent swi_isevent
+	    #define process swi_process
+	#endif
+	
+	
     #define aGetFont swi_aGetFont
-    #define setFont swi_setFont
-    #define setStyle swi_setStyle
-    #define getStyle swi_getStyle
-    #define modifyStyle swi_modifyStyle
-    #define setExStyle swi_setExStyle
+    #define aGetText swi_aGetText
     #define getExStyle swi_getExStyle
-    #define modifyExStyle swi_modifyExStyle
+	#define getStyle swi_getStyle
     #define asprintf swi_asprintf
     #define var __auto_type
     #define swapBuffers swi_swapBuffers
@@ -317,6 +351,7 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
     #define setGL2D swi_setGL2D
     #define mainLoop swi_mainLoop
     #define mainWindowLoop swi_mainWindowLoop
+	    
 #endif
 
 #endif
