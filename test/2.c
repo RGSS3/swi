@@ -11,10 +11,10 @@ void render(void) {
 	double p = 2 * M_PI / 3600;
 	x += speed;
 	for (size_t i = x; i < 1200 + x; ++i) {
-		double x1 = 320 + cos((double)i * p) * 40;
-		double y1 = 240 + sin((double)i * p) * 40;
-		double x2 = 320 + cos((double)(i + 1) * p) * 40;
-		double y2 = 240 + sin((double)(i + 1) * p) * 40;
+		double x1 = 320 + cos((double)i * p) * 80;
+		double y1 = 240 + sin((double)i * p) * 80;
+		double x2 = 320 + cos((double)(i + 1) * p) * 80;
+		double y2 = 240 + sin((double)(i + 1) * p) * 80;
 		glColor3f(1, 0, 0);
 		glVertex2f((float)x1, (float)y1);
 		glColor3f(1, 0, 0);
@@ -45,6 +45,6 @@ int main(void) {
 	setSize(h, 640, 480);
 	setPos(h, 200, 200);
 	setVisible(h, true);
-	glFlat(640, 480);
+	setGL2D(640, 480);
 	mainWindowLoop(msgfunc, render);
 }
