@@ -2,10 +2,13 @@
 #define SWI_H_
 #include <assert.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <windowsx.h>
+
 
 #ifdef SWI_OPENGL
 #include <gl/gl.h>
@@ -24,14 +27,37 @@
 	}\
 }while(0);
 
-static LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+
+typedef LRESULT SWIPROC (void);
+
+SWIPROC *swi_user = NULL;
+static __thread HWND swi_current;
+static __thread HWND swi_current_window;
+static __thread MSG  swi_msg;
+static __thread HDC  swi_hdc;
+static __thread PAINTSTRUCT swi_ps;
+
+LRESULT swi_call_default(void) {
+   	return DefWindowProc(swi_msg.hwnd, swi_msg.message, swi_msg.wParam, swi_msg.lParam);
+}
+
+static LRESULT CALLBACK SwiWndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
 	switch(Message) {
 		case WM_DESTROY: {
 			PostQuitMessage(0);
 			break;
 		}
-		default:
-			return DefWindowProc(hwnd, Message, wParam, lParam);
+		default: {
+			if (swi_user) {
+				swi_msg.hwnd = hwnd;
+				swi_msg.message = Message;
+				swi_msg.wParam = wParam;
+				swi_msg.lParam = lParam;
+				return swi_user();
+			} else {
+				return DefWindowProc(hwnd, Message, wParam, lParam);
+			}
+		}
 	}
 	return 0;
 }
@@ -41,7 +67,7 @@ __attribute__((constructor)) void register_class(void) {
 	
 	memset(&wc,0,sizeof(wc));
 	wc.cbSize		 = sizeof(WNDCLASSEX);
-	wc.lpfnWndProc	 = WndProc;
+	wc.lpfnWndProc	 = SwiWndProc;
 	wc.style         = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.hCursor		 = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
@@ -181,17 +207,28 @@ void swi_setSize(HWND h, int x, int y) {
 }
 
 
+static LOGFONT swi_def_font = {
+    .lfCharSet = DEFAULT_CHARSET,
+    .lfHeight = 14,
+    .lfWeight = 500,
+    .lfFaceName = "Consolas"
+};
+
+static LOGPEN swi_def_pen = {
+    .lopnStyle = PS_SOLID,
+    .lopnWidth = 1,
+    .lopnColor = RGB(0, 0, 0)
+};
+
+static LOGBRUSH swi_def_brush = {
+	.lbStyle = BS_SOLID,
+	.lbColor = RGB(0, 0, 0),	
+};
 LOGFONT *swi_aGetFont(HWND h) {
 	HFONT hfont = (HFONT)SendMessage(h, WM_GETFONT, 0, 0);
-	LOGFONT *l = malloc(sizeof(*l));
-	if (hfont == NULL) {
-		memset(l, 0, sizeof(*l));
-		l->lfCharSet = DEFAULT_CHARSET;
-		l->lfHeight = 14;
-		l->lfWeight = 500;
-		strcpy(l->lfFaceName, "Consolas");
-	} else {
-		GetObject(hfont, sizeof(*l), l);
+	LOGFONT *l = calloc(sizeof(*l), 1);
+	if (hfont == NULL || !GetObject(hfont, sizeof(*l), l)) {
+		memcpy(l, &swi_def_font, sizeof(l));
 	}
 	return l;
 }
@@ -205,9 +242,64 @@ void swi_setFont(HWND h, LOGFONT *l) {
 	ReleaseDC(h, hdc);
 }
 
+LOGPEN *swi_aGetPen(HWND h) {
+	HDC hdc = GetDC(h);
+	LOGPEN *l = malloc(sizeof(*l));
+	
+	if (!GetObject(hdc, sizeof(*l), l)) {
+		memcpy(l, &swi_def_pen, sizeof(*l));
+	}
+	return l;
+}
+
+void swi_setPen(HWND h, LOGPEN *l) {
+	HDC hdc = GetDC(h);
+	HPEN hh = CreatePenIndirect(l);
+	HPEN hold = SelectObject(hdc, hh);
+	DeleteObject((HGDIOBJ)hold);
+	ReleaseDC(h, hdc);
+}
+
+LOGBRUSH *swi_aGetBrush(HWND h) {
+	HDC hdc = GetDC(h);
+	LOGBRUSH *l = malloc(sizeof(*l));
+	
+	if (!GetObject(hdc, sizeof(*l), l)) {
+		memcpy(l, &swi_def_brush, sizeof(*l));
+	}
+	return l;
+}
+
+
+void swi_setBrush(HWND h, LOGBRUSH *l) {
+	HDC hdc = GetDC(h);
+	HBRUSH hh = CreateBrushIndirect(l);
+	HBRUSH hold = SelectObject(hdc, hh);
+	DeleteObject((HGDIOBJ)hold);
+	ReleaseDC(h, hdc);
+}
+
+void swi_setStroke(HWND h, int r, int g, int b) {
+    LOGPEN *l = swi_aGetPen(h);
+	l->lopnColor = RGB(r, g, b);
+	swi_setPen(h, l);
+	free(l);	
+}
+
+void swi_setFill(HWND h, int r, int g, int b) {
+    LOGBRUSH *l = swi_aGetBrush(h);
+	l->lbColor = RGB(r, g, b);
+	swi_setBrush(h, l);
+	free(l);
+}
+
 
 int swi_peek(MSG *msg) {
 	return PeekMessage(msg,  0, 0, 0, PM_NOREMOVE);
+}
+
+int swi_getMessage(MSG *msg) {
+	return GetMessage(msg,  0, 0, 0);
 }
 
 int swi_poll(MSG *msg) {
@@ -280,13 +372,42 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	}	
 }
 
+void swi_eventloop(void) {
+	while (1) {
+		MSG msg;
+		if (swi_peek(&msg) && swi_getMessage(&msg)) {
+			if (swi_isevent(&msg, 0, WM_QUIT)) {
+				break;
+			}
+			swi_process(&msg);
+		} else {
+			Sleep(10);
+		}
+	}	
+}
+
+#define swi_thread_var __thread
+typedef LRESULT swi_result;
 #if !defined(SWI_NO_SHORTNAMES)
 	#if defined(SWI_STATEFUL_MODEL)
-		static __thread HWND swi_current;
-		static __thread HWND swi_current_window;
-		static __thread MSG swi_msg;
-	    #define AT(a)               do {swi_current = a;} while(0)
+		#define STATEFUL(...)  __VA_ARGS__
+		#define STATELESS(...)
+	#else
+		#define STATEFUL(...) 
+		#define STATELESS(...) __VA_ARGS__
+	#endif
+	
+	#if defined(SWI_STATEFUL_MODEL)
+
+		
+		
+		#define AT(a)               do {swi_current = a;} while(0)
 	    #define ATWINDOW()          do {swi_current = swi_current_window;} while(0)
+	    #define to_parent()         do {swi_current = GetParent(swi_current); } while(0)
+	    
+	    
+	
+	
 	    #define window()            (swi_current = swi_current_window = swi_window())
 	    #define openglwindow()      (swi_current = swi_current_window = swi_openglwindow())
 	    #define button()            (swi_current = swi_button(swi_current_window))
@@ -302,13 +423,34 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	    #define setFont(t)          (swi_setFont(swi_current, t))
 	    #define setVisible(t)       (swi_setVisible(swi_current, t))
 	    #define setStyle(t)         (swi_setStyle(swi_current, t))
-	    #define modifyStyle(a, b)      (swi_modifyStyle(swi_current, a, b))
+	    #define modifyStyle(a, b)   (swi_modifyStyle(swi_current, a, b))
 	    #define setExStyle(t)       (swi_setExStyle(swi_current, t))
 	    
 	    #define peek()              (swi_peek(&swi_msg))
 	    #define poll()              (swi_poll(&swi_msg))
+	    #define getmsg()            (swi_getMessage(&swi_msg))
 	    #define process()           (swi_process(&swi_msg))
+	    
 	    #define isevent(b, c)       (swi_isevent(&swi_msg, b, c))
+	    #define event(c)            (swi_isevent(&swi_msg, swi_current, c))
+	    #define event_target()      (swi_msg.hwnd)
+	    #define event_type()        (swi_msg.message)
+	    
+	    #define to_paint()          (swi_hdc = BeginPaint(swi_current, &swi_ps))
+	    #define end_paint()         (EndPaint(swi_current, &swi_ps))
+	    #define to_dc()             (swi_hdc = GetDC(swi_current))
+	    #define release_dc()        (ReleaseDC(swi_current, swi_hdc))
+	    
+	    #define setPen(b)           (swi_setPen(swi_current, b))
+	    #define setBrush(b)         (swi_setBrush(swi_current, b))
+	    #define setStroke(r, g, b)  (swi_setStroke(swi_current, r, g, b))
+	    #define setFill(r, g, b)    (swi_setFill(swi_current, r, g, b))
+	    
+	    #define to_msg_target()     (swi_current = swi_msg.hwnd)
+	    
+	    
+	    
+	    
     
 	#else 	
 	    #define window swi_window
@@ -327,6 +469,11 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	    #define setSize swi_setSize
 	    #define setVisible swi_setVisible
 	    #define setFont swi_setFont
+	    #define setPen swi_setPen
+	    #define setBrush swi_setBrush
+	    #define setStroke   swi_setStroke
+	    #define setFill     swi_setFill
+	    
 	    #define setStyle swi_setStyle
 	    #define modifyStyle swi_modifyStyle
 	    #define setExStyle swi_setExStyle
@@ -339,6 +486,7 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	    
 	    #define peek  swi_peek
 	    #define poll  swi_poll
+	    #define getmsg  swi_getMessage
 	    #define isevent swi_isevent
     
 	#endif
@@ -346,6 +494,8 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	
     #define aGetFont swi_aGetFont
     #define aGetText swi_aGetText
+    #define aGetPen swi_aGetPen
+	#define aGetBrush swi_aGetBrush
     #define getExStyle swi_getExStyle
 	#define getStyle swi_getStyle
     #define asprintf swi_asprintf
@@ -355,7 +505,10 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
     #define setGL2D swi_setGL2D
     #define mainLoop swi_mainLoop
     #define mainWindowLoop swi_mainWindowLoop
+    #define eventloop swi_eventloop
+    #define setUserHandler(a)  (swi_user = a)
 	    
+    #define getMouseXY(x, y)          (x = GET_X_LPARAM(swi_msg.lParam), y = GET_Y_LPARAM(swi_msg.lParam))
 #endif
 
 #endif
