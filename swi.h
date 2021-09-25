@@ -372,6 +372,7 @@ void swi_mainLoop(SWI_MSGFUNC *msgfunc, SWI_RENDERFUNC *render) {
 	}	
 }
 
+
 void swi_eventloop(void) {
 	while (1) {
 		MSG msg;
@@ -507,8 +508,20 @@ typedef LRESULT swi_result;
     #define mainWindowLoop swi_mainWindowLoop
     #define eventloop swi_eventloop
     #define setUserHandler(a)  (swi_user = a)
+    #define run_paint(w)         (swi_run_paint(w))
 	    
     #define getMouseXY(x, y)          (x = GET_X_LPARAM(swi_msg.lParam), y = GET_Y_LPARAM(swi_msg.lParam))
 #endif
 
+
+
+
+
 #endif
+typedef void SWI_ACTION(void);
+void swi_run_paint(SWI_ACTION func) {
+	to_msg_target();
+    to_paint();	
+    func();
+    end_paint();
+}
