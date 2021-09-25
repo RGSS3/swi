@@ -12,20 +12,20 @@ void render(void) {
    Ellipse(swi_hdc, x - 60, y - 60, x + 60, y + 60);
 }
 
-swi_result mymsg(void) {
+void mymsg(void) {
 	to_msg_target();
 	if (event(WM_MOUSEMOVE)) {
 	    getMouseXY(x, y);
 	    InvalidateRect(swi_current, 0, 0);
-	    return 1;
+	    set_msg_handled(true);
+	    set_msg_result(1);
 	}
 	if (event(WM_PAINT)) {
 	    run_paint(render);
-	    return 1;
+	    set_msg_handled(true);
+	    set_msg_result(1);
 	}
-	return swi_call_default();
 }
-
 
 int main(void) {
     window();
