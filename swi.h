@@ -15,6 +15,9 @@
 #include <gl/glu.h>
 #endif
 
+
+#define SWI_XCAT(a, b) a ## b
+#define SWI_CAT(...) SWI_XCAT(__VA_ARGS__)
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
 
@@ -27,15 +30,25 @@
 	}\
 }while(0);
 
+#if !defined(SWI_NO_SHORTNAMES)
+    #define swi_define_return(t, a) static __thread t SWI_CAT(swi_rv_, a); void SWI_CAT(swi_set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; }  \
+       void SWI_CAT(set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; } 
+#else
+	#define swi_define_return(t, a) static __thread t SWI_CAT(swi_rv_, a); void SWI_CAT(swi_set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; } 
+#endif
 
-typedef LRESULT SWIPROC (void);
 
-SWIPROC *swi_user = NULL;
+typedef void SWI_ACTION(void);
+
+SWI_ACTION *swi_user = NULL;
 static __thread HWND swi_current;
 static __thread HWND swi_current_window;
 static __thread MSG  swi_msg;
 static __thread HDC  swi_hdc;
 static __thread PAINTSTRUCT swi_ps;
+
+swi_define_return(LRESULT, msg_result);
+swi_define_return(bool, msg_handled);
 
 LRESULT swi_call_default(void) {
    	return DefWindowProc(swi_msg.hwnd, swi_msg.message, swi_msg.wParam, swi_msg.lParam);
@@ -53,10 +66,14 @@ static LRESULT CALLBACK SwiWndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
 				swi_msg.message = Message;
 				swi_msg.wParam = wParam;
 				swi_msg.lParam = lParam;
-				return swi_user();
-			} else {
-				return DefWindowProc(hwnd, Message, wParam, lParam);
+				swi_rv_msg_handled = false;
+				swi_rv_msg_result = 0;
+				swi_user();
+				if (swi_rv_msg_handled) {
+					return swi_rv_msg_result;	
+				}
 			}
+			return DefWindowProc(hwnd, Message, wParam, lParam);			
 		}
 	}
 	return 0;
@@ -388,6 +405,9 @@ void swi_eventloop(void) {
 }
 
 #define swi_thread_var __thread
+
+
+
 typedef LRESULT swi_result;
 #if !defined(SWI_NO_SHORTNAMES)
 	#if defined(SWI_STATEFUL_MODEL)
@@ -516,12 +536,13 @@ typedef LRESULT swi_result;
 
 
 
-
-#endif
-typedef void SWI_ACTION(void);
 void swi_run_paint(SWI_ACTION func) {
 	to_msg_target();
     to_paint();	
     func();
     end_paint();
 }
+
+#undef swi_def_return
+
+#endif
