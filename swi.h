@@ -1,6 +1,7 @@
 #ifndef SWI_H_
 #define SWI_H_
 #include <assert.h>
+#include <richedit.h>
 #include <stdarg.h>
 #include <stdatomic.h>
 #include <stdbool.h>
@@ -59,6 +60,7 @@
 #endif
 
 
+#define swi_ensure_loaded(lib)   do { static bool loaded = false; if (!loaded) { loaded = (bool)LoadLibrary(lib); } }while(0)
 
 typedef void SWI_ACTION(void);
 
@@ -169,7 +171,7 @@ HWND swi_button(HWND par) {
 }
 
 HWND swi_textbox(HWND par) {
-    return CreateWindowEx(0, "Edit", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
+    return CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
 }
 
 HWND swi_combobox(HWND par) {
@@ -177,11 +179,21 @@ HWND swi_combobox(HWND par) {
 }
 
 HWND swi_listbox(HWND par) {
-    return CreateWindowEx(0, "ListBox", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
+    return CreateWindowEx(WS_EX_CLIENTEDGE, "ListBox", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
 }
 
 HWND swi_static(HWND par) {
-    return CreateWindowEx(0, "Static", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
+    return CreateWindowEx(WS_EX_CLIENTEDGE, "Static", "", WS_CHILD|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200, par, 0, 0, 0);
+}
+
+HWND swi_rtfbox(HWND par) {
+	swi_ensure_loaded("Msftedit.dll");
+    return CreateWindowEx(WS_EX_CLIENTEDGE, "RICHEDIT50W", "", ES_MULTILINE|WS_CHILD|WS_VISIBLE, 0, 0, 200, 200, par, 0, 0, 0);
+}
+
+HWND swi_scibox(HWND par) {
+	swi_ensure_loaded("SciLexer.dll");
+    return CreateWindowEx(WS_EX_CLIENTEDGE, "Scintilla", "", ES_MULTILINE|WS_CHILD|WS_VISIBLE, 0, 0, 200, 200, par, 0, 0, 0);
 }
 
 HWND swi_createControl(HWND par, const char *class) {
@@ -463,6 +475,8 @@ typedef LRESULT swi_result;
 	    #define listbox()           (swi_current = swi_listbox(swi_current_window))
 	    #define combobox()          (swi_current = swi_combobox(swi_current_window))
 	    #define label()             (swi_current = swi_static(swi_current_window))
+	    #define rtfbox()            (swi_current = swi_rtfbox(swi_current_window))
+	    #define scibox()            (swi_current = swi_scibox(swi_current_window))
 	    #define createControl(w)    (swi_current = swi_createControl(w, swi_currentwindow))
 	    
 	    #define setText(t)          (swi_setText(swi_current, t))
@@ -473,6 +487,7 @@ typedef LRESULT swi_result;
 	    #define setStyle(t)         (swi_setStyle(swi_current, t))
 	    #define modifyStyle(a, b)   (swi_modifyStyle(swi_current, a, b))
 	    #define setExStyle(t)       (swi_setExStyle(swi_current, t))
+	    #define modifyExStyle(a, b)   (swi_modifyExStyle(swi_current, a, b))
 	    
 	    #define peek()              (swi_peek(&swi_msg))
 	    #define poll()              (swi_poll(&swi_msg))
@@ -499,7 +514,8 @@ typedef LRESULT swi_result;
 		#define draw_rect()         (Rectangle(swi_hdc, swi_rv_point1_1,  swi_rv_point1_2, swi_rv_point2_1, swi_rv_point2_2))
 	    #define draw_ellipse()      (Ellipse(swi_hdc, swi_rv_point1_1,  swi_rv_point1_2, swi_rv_point2_1, swi_rv_point2_2))
 	    
-	    
+	    #define sendmsg(a, b, c)    (SendMessage(swi_current, a, b, c))
+	    #define postmsg(a, b, c)    (PostMessage(swi_current, a, b, c))
     
 	#else 	
 	    #define window swi_window
@@ -510,6 +526,8 @@ typedef LRESULT swi_result;
 	    #define listbox swi_listbox
 	    #define combobox swi_combobox
 	    #define label swi_static
+	    #define rtfbox swi_rtfbox
+	    #define scibox swi_scibox
 	    #define createControl swi_createControl
 	    
 	    
@@ -526,7 +544,6 @@ typedef LRESULT swi_result;
 	    #define setStyle swi_setStyle
 	    #define modifyStyle swi_modifyStyle
 	    #define setExStyle swi_setExStyle
-	    
 	    #define modifyExStyle swi_modifyExStyle
 	    
 	    
@@ -538,6 +555,9 @@ typedef LRESULT swi_result;
 	    #define getmsg  swi_getMessage
 	    #define isevent swi_isevent
     
+    
+    	#define sendmsg SendMessage
+	    #define postmsg PostMessage
 	#endif
 	
 	
