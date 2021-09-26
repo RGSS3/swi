@@ -5,11 +5,15 @@ int x, y;
 void render(void) {
    setFill(255, 255, 255);
    setStroke(255, 255, 255);
-   Rectangle(swi_hdc, 0, 0, 640, 480);
+   set_point1(0, 0);
+   set_point2(640, 480);
+   draw_rect();
    
    setStroke(255, 0, 0);
    setFill(0, 255, 0);   
-   Ellipse(swi_hdc, x - 60, y - 60, x + 60, y + 60);
+   set_point1(x - 60, y - 60);
+   set_point2(x + 60, y + 60);
+   draw_ellipse();
 }
 
 void mymsg(void) {
