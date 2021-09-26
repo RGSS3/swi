@@ -18,6 +18,9 @@
 
 #define SWI_XCAT(a, b) a ## b
 #define SWI_CAT(...) SWI_XCAT(__VA_ARGS__)
+
+#define SWI_XCAT3(a, b, c) a ## b ## c
+#define SWI_CAT3(...) SWI_XCAT3(__VA_ARGS__)
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
 
@@ -33,9 +36,28 @@
 #if !defined(SWI_NO_SHORTNAMES)
     #define swi_define_return(t, a) static __thread t SWI_CAT(swi_rv_, a); void SWI_CAT(swi_set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; }  \
        void SWI_CAT(set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; } 
+       
+    #define swi_define_return2(t1, t2, a)\
+	   static __thread t1 SWI_CAT3(swi_rv_, a, _1); \
+	   static __thread t2 SWI_CAT3(swi_rv_, a, _2); \
+	   void SWI_CAT(swi_set_, a)(t1 v1, t2 v2) { SWI_CAT3(swi_rv_, a, _1) = v1; SWI_CAT3(swi_rv_, a, _2) = v2;}  \
+	   void SWI_CAT3(swi_set_, a, _1) (t1 v1) { SWI_CAT3(swi_rv_, a, _1) = v1; } \
+       void SWI_CAT3(swi_set_, a, _2) (t2 v2) { SWI_CAT3(swi_rv_, a, _2) = v2; } \
+       void SWI_CAT(set_, a)(t1 v1, t2 v2) { SWI_CAT3(swi_rv_, a, _1) = v1; SWI_CAT3(swi_rv_, a, _2) = v2;}  \
+       void SWI_CAT3(set_, a, _1) (t1 v1) { SWI_CAT3(swi_rv_, a, _1) = v1; } \
+       void SWI_CAT3(set_, a, _2) (t2 v2) { SWI_CAT3(swi_rv_, a, _2) = v2; }
+       
 #else
 	#define swi_define_return(t, a) static __thread t SWI_CAT(swi_rv_, a); void SWI_CAT(swi_set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; } 
+	#define swi_define_return2(t1, t2, a)\
+	   static __thread t1 SWI_CAT3(swi_rv_, a, _1); \
+	   static __thread t2 SWI_CAT3(swi_rv_, a, _2); \
+	   void SWI_CAT(swi_set_, a)(t1 v1, t2 v2) { SWI_CAT3(swi_rv_, a, _1) = v1; SWI_CAT3(swi_rv_, a, _2) = v2;}  \
+	   void SWI_CAT3(swi_set_, a, _1) (t1 v1) { SWI_CAT3(swi_rv_, a, _1) = v1; } \
+       void SWI_CAT3(swi_set_, a, _2) (t2 v2) { SWI_CAT3(swi_rv_, a, _2) = v2; }
+       
 #endif
+
 
 
 typedef void SWI_ACTION(void);
@@ -49,6 +71,11 @@ static __thread PAINTSTRUCT swi_ps;
 
 swi_define_return(LRESULT, msg_result);
 swi_define_return(bool, msg_handled);
+swi_define_return2(int, int, point1);
+swi_define_return2(int, int, point2);
+swi_define_return2(int, int, point3);
+swi_define_return2(int, int, point4);
+
 
 LRESULT swi_call_default(void) {
    	return DefWindowProc(swi_msg.hwnd, swi_msg.message, swi_msg.wParam, swi_msg.lParam);
@@ -469,7 +496,8 @@ typedef LRESULT swi_result;
 	    
 	    #define to_msg_target()     (swi_current = swi_msg.hwnd)
 	    
-	    
+		#define draw_rect()         (Rectangle(swi_hdc, swi_rv_point1_1,  swi_rv_point1_2, swi_rv_point2_1, swi_rv_point2_2))
+	    #define draw_ellipse()      (Ellipse(swi_hdc, swi_rv_point1_1,  swi_rv_point1_2, swi_rv_point2_1, swi_rv_point2_2))
 	    
 	    
     
