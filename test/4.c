@@ -9,11 +9,21 @@ void render(void) {
    set_point2(640, 480);
    draw_rect();
    
+   
+   int cx = 2 - (x - 320) + 320;
+   int cy = 2 - (y - 240) + 240;
+   setStroke(255, 0, 0);
+   setFill(255, 0, 255);   
+   set_point1(cx - 60, cy - 60);
+   set_point2(cx + 60, cy + 60);
+   draw_ellipse();
+   
    setStroke(255, 0, 0);
    setFill(0, 255, 0);   
    set_point1(x - 60, y - 60);
    set_point2(x + 60, y + 60);
    draw_ellipse();
+  
 }
 
 void mymsg(void) {
