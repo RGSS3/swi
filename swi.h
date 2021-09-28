@@ -10,7 +10,8 @@
 #include <windows.h>
 #include <windowsx.h>
 
-
+#warning "swi.h is now in beta stage"
+#warning "see https://github.com/rgss3/swi for more"
 #ifdef SWI_OPENGL
 #include <gl/gl.h>
 #include <gl/glu.h>
@@ -35,12 +36,12 @@
 }while(0);
 
 #if !defined(SWI_NO_SHORTNAMES)
-    #define swi_define_return(t, a) static __thread t SWI_CAT(swi_rv_, a); void SWI_CAT(swi_set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; }  \
+    #define swi_define_return(t, a) static swi_thread_var t SWI_CAT(swi_rv_, a); void SWI_CAT(swi_set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; }  \
        void SWI_CAT(set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; } 
        
     #define swi_define_return2(t1, t2, a)\
-	   static __thread t1 SWI_CAT3(swi_rv_, a, _1); \
-	   static __thread t2 SWI_CAT3(swi_rv_, a, _2); \
+	   static swi_thread_var t1 SWI_CAT3(swi_rv_, a, _1); \
+	   static swi_thread_var t2 SWI_CAT3(swi_rv_, a, _2); \
 	   void SWI_CAT(swi_set_, a)(t1 v1, t2 v2) { SWI_CAT3(swi_rv_, a, _1) = v1; SWI_CAT3(swi_rv_, a, _2) = v2;}  \
 	   void SWI_CAT3(swi_set_, a, _1) (t1 v1) { SWI_CAT3(swi_rv_, a, _1) = v1; } \
        void SWI_CAT3(swi_set_, a, _2) (t2 v2) { SWI_CAT3(swi_rv_, a, _2) = v2; } \
@@ -49,10 +50,10 @@
        void SWI_CAT3(set_, a, _2) (t2 v2) { SWI_CAT3(swi_rv_, a, _2) = v2; }
        
 #else
-	#define swi_define_return(t, a) static __thread t SWI_CAT(swi_rv_, a); void SWI_CAT(swi_set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; } 
+	#define swi_define_return(t, a) static swi_thread_var t SWI_CAT(swi_rv_, a); void SWI_CAT(swi_set_, a)(t value) { SWI_CAT(swi_rv_, a) = value; } 
 	#define swi_define_return2(t1, t2, a)\
-	   static __thread t1 SWI_CAT3(swi_rv_, a, _1); \
-	   static __thread t2 SWI_CAT3(swi_rv_, a, _2); \
+	   static swi_thread_var t1 SWI_CAT3(swi_rv_, a, _1); \
+	   static swi_thread_var t2 SWI_CAT3(swi_rv_, a, _2); \
 	   void SWI_CAT(swi_set_, a)(t1 v1, t2 v2) { SWI_CAT3(swi_rv_, a, _1) = v1; SWI_CAT3(swi_rv_, a, _2) = v2;}  \
 	   void SWI_CAT3(swi_set_, a, _1) (t1 v1) { SWI_CAT3(swi_rv_, a, _1) = v1; } \
        void SWI_CAT3(swi_set_, a, _2) (t2 v2) { SWI_CAT3(swi_rv_, a, _2) = v2; }
@@ -61,15 +62,15 @@
 
 
 #define swi_ensure_loaded(lib)   do { static bool loaded = false; if (!loaded) { loaded = (bool)LoadLibrary(lib); } }while(0)
-
+#define swi_thread_var __thread
 typedef void SWI_ACTION(void);
 
 SWI_ACTION *swi_user = NULL;
-static __thread HWND swi_current;
-static __thread HWND swi_current_window;
-static __thread MSG  swi_msg;
-static __thread HDC  swi_hdc;
-static __thread PAINTSTRUCT swi_ps;
+static swi_thread_var HWND swi_current;
+static swi_thread_var HWND swi_current_window;
+static swi_thread_var MSG  swi_msg;
+static swi_thread_var HDC  swi_hdc;
+static swi_thread_var PAINTSTRUCT swi_ps;
 
 swi_define_return(LRESULT, msg_result);
 swi_define_return(bool, msg_handled);
@@ -443,7 +444,8 @@ void swi_eventloop(void) {
 	}	
 }
 
-#define swi_thread_var __thread
+
+
 
 
 
@@ -517,6 +519,12 @@ typedef LRESULT swi_result;
 	    #define sendmsg(a, b, c)    (SendMessage(swi_current, a, b, c))
 	    #define postmsg(a, b, c)    (PostMessage(swi_current, a, b, c))
     
+		void swi_run_paint(SWI_ACTION func) {
+			to_msg_target();
+		    to_paint();	
+		    func();
+		    end_paint();
+		}
 	#else 	
 	    #define window swi_window
 	    #define openglwindow swi_openglwindow
@@ -584,12 +592,6 @@ typedef LRESULT swi_result;
 
 
 
-void swi_run_paint(SWI_ACTION func) {
-	to_msg_target();
-    to_paint();	
-    func();
-    end_paint();
-}
 
 #undef swi_def_return
 
